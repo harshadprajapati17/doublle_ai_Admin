@@ -1,0 +1,307 @@
+"use client";
+
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
+
+export function SectionCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <header className="mb-6 border-b border-zinc-100 pb-4">
+        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+        <p className="mt-1 text-sm text-zinc-600">{description}</p>
+      </header>
+      <div className="flex flex-col gap-5">{children}</div>
+    </section>
+  );
+}
+
+export function FieldGroup({ children }: { children: ReactNode }) {
+  return <div className="grid gap-5 sm:grid-cols-2">{children}</div>;
+}
+
+export function Field({
+  label,
+  htmlFor,
+  helpId,
+  help,
+  error,
+  required,
+  className,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  helpId?: string;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  const describedBy = [helpId, error ? `${htmlFor}-error` : undefined]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      <label htmlFor={htmlFor} className="text-sm font-medium text-zinc-700">
+        {label}
+        {required ? <span className="text-red-600"> *</span> : null}
+      </label>
+      <div aria-describedby={describedBy || undefined}>{children}</div>
+      {help ? (
+        <p id={helpId} className="text-xs text-zinc-500">
+          {help}
+        </p>
+      ) : null}
+      {error ? (
+        <p id={`${htmlFor}-error`} className="text-xs text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function TextInput({
+  className,
+  invalid,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
+  return (
+    <input
+      {...props}
+      className={cn(
+        "w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:ring-2",
+        invalid
+          ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+          : "border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900/10",
+        className,
+      )}
+    />
+  );
+}
+
+export function SelectInput({
+  className,
+  invalid,
+  children,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  invalid?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <select
+      {...props}
+      className={cn(
+        "w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:ring-2",
+        invalid
+          ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+          : "border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900/10",
+        className,
+      )}
+    >
+      {children}
+    </select>
+  );
+}
+
+export function NumberInput({
+  className,
+  invalid,
+  suffix,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  invalid?: boolean;
+  suffix?: string;
+}) {
+  if (!suffix) {
+    return <TextInput type="number" invalid={invalid} className={className} {...props} />;
+  }
+
+  return (
+    <div className="relative">
+      <TextInput
+        type="number"
+        invalid={invalid}
+        className={cn("pr-10", className)}
+        {...props}
+      />
+      <span
+        className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-zinc-500"
+        aria-hidden
+      >
+        {suffix}
+      </span>
+    </div>
+  );
+}
+
+export function CurrencyInput({
+  currency,
+  className,
+  invalid,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  currency: string;
+  invalid?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-zinc-500">
+        {currency}
+      </span>
+      <TextInput
+        type="number"
+        min={0}
+        step="0.01"
+        invalid={invalid}
+        className={cn("pl-12", className)}
+        {...props}
+      />
+    </div>
+  );
+}
+
+export function RadioCardGroup<T extends string>({
+  name,
+  value,
+  onChange,
+  options,
+  invalid,
+}: {
+  name: string;
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string; description: string }[];
+  invalid?: boolean;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-invalid={invalid}
+      className="grid gap-3 sm:grid-cols-1"
+    >
+      {options.map((option) => {
+        const id = `${name}-${option.value}`;
+        const checked = value === option.value;
+
+        return (
+          <label
+            key={option.value}
+            htmlFor={id}
+            className={cn(
+              "flex cursor-pointer gap-3 rounded-lg border p-4 transition",
+              checked
+                ? "border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900"
+                : "border-zinc-200 hover:border-zinc-300",
+              invalid && !checked && "border-red-200",
+            )}
+          >
+            <input
+              id={id}
+              type="radio"
+              name={name}
+              value={option.value}
+              checked={checked}
+              onChange={() => onChange(option.value)}
+              className="mt-0.5 size-4 shrink-0 accent-zinc-900"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-900">
+                {option.label}
+              </span>
+              <span className="mt-0.5 block text-xs text-zinc-600">
+                {option.description}
+              </span>
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+export function SegmentedControl<T extends string>({
+  name,
+  value,
+  onChange,
+  options,
+}: {
+  name: string;
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string }[];
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={name}
+      className="inline-flex w-full flex-wrap gap-1 rounded-lg border border-zinc-200 bg-zinc-100 p-1 sm:w-auto"
+    >
+      {options.map((option) => {
+        const selected = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition sm:flex-none",
+              selected
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-600 hover:text-zinc-900",
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ToggleRow({
+  id,
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+      <div>
+        <label htmlFor={id} className="text-sm font-medium text-zinc-800">
+          {label}
+        </label>
+        {description ? (
+          <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
+        ) : null}
+      </div>
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 size-4 shrink-0 accent-zinc-900"
+      />
+    </div>
+  );
+}
