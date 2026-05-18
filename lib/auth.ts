@@ -1,7 +1,19 @@
 export const AUTH_COOKIE = "auth-session";
 
-export function getAuthToken(data: Record<string, unknown>): string | undefined {
+function readToken(record: Record<string, unknown>): string | undefined {
   const token =
-    data.token ?? data.accessToken ?? data.access_token ?? data.jwt;
+    record.token ?? record.accessToken ?? record.access_token ?? record.jwt;
   return typeof token === "string" ? token : undefined;
+}
+
+export function getAuthToken(data: Record<string, unknown>): string | undefined {
+  const topLevel = readToken(data);
+  if (topLevel) return topLevel;
+
+  const nested = data.data;
+  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+    return readToken(nested as Record<string, unknown>);
+  }
+
+  return undefined;
 }

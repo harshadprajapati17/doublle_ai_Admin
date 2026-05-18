@@ -63,5 +63,5 @@ export const CAP_BEHAVIOR_OPTIONS: {
 export const REFEREE_BENEFIT_OPTIONS = [
   { value: "NONE" as const, label: "None" },
   { value: "TRIAL_EXTENSION" as const, label: "Trial extension" },
-  { value: "CREDIT" as const, label: "Account credit" },
+  { value: "CREDIT" as const, label: "Product credit" },
 ];

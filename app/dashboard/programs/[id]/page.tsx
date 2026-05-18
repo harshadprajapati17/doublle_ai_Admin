@@ -47,15 +47,23 @@ export default async function ProgramDetailPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Referral program
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold text-zinc-900">{program.name}</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          Status:{" "}
-          <span className="font-medium text-zinc-800">{program.status}</span>
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            Referral program
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold text-zinc-900">{program.name}</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            Status:{" "}
+            <span className="font-medium text-zinc-800">{program.status}</span>
+          </p>
+        </div>
+        <Link
+          href={`/dashboard/programs/${program.id}/edit`}
+          className="inline-flex shrink-0 rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+        >
+          Edit program
+        </Link>
       </header>
 
       <dl className="grid gap-4 rounded-xl border border-zinc-200 bg-white p-6 text-sm sm:grid-cols-2">
@@ -73,6 +81,19 @@ export default async function ProgramDetailPage({ params }: PageProps) {
         <DetailItem label="Cookie window" value={`${program.cookieDays} days`} />
         <DetailItem label="Attribution" value={program.attributionRule} />
         <DetailItem label="Referee benefit" value={program.refereeBenefitType} />
+        {program.refereeBenefitType === "CREDIT" && program.refereeBenefitValue != null ? (
+          <DetailItem
+            label="Product credit"
+            value={`${program.refereeBenefitValue} credits`}
+          />
+        ) : null}
+        {program.refereeBenefitType === "TRIAL_EXTENSION" &&
+        program.refereeBenefitTrialDays != null ? (
+          <DetailItem
+            label="Extra trial days"
+            value={`${program.refereeBenefitTrialDays} days`}
+          />
+        ) : null}
         <DetailItem
           label="Monthly cap"
           value={

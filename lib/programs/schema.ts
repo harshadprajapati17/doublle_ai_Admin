@@ -69,7 +69,7 @@ export const createProgramFormSchema = z
       ) {
         ctx.addIssue({
           code: "custom",
-          message: "Credit amount must be greater than 0",
+          message: "Product credit must be greater than 0",
           path: ["refereeBenefitValue"],
         });
       }
@@ -161,3 +161,5 @@ export function buildCreateProgramPayload(
 
   return payload;
 }
+
+export const buildUpdateProgramPayload = buildCreateProgramPayload;

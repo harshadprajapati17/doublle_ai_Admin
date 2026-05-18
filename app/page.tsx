@@ -9,7 +9,7 @@ export default function LoginPage() {
             Sign in
           </h1>
           <p className="mt-2 text-sm text-zinc-600">
-            Enter your email to access the admin dashboard.
+            Sign in with your admin ID and password.
           </p>
         </div>
         <LoginForm />

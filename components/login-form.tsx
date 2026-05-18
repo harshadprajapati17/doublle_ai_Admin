@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import type { ApiErrorBody } from "@/lib/programs/types";
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [adminId, setAdminId] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,19 +17,25 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/demo-admin", {
+      const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: adminId.trim().toLowerCase(),
+          password,
+        }),
       });
 
-      const data = (await response.json().catch(() => ({}))) as {
+      const data = (await response.json().catch(() => ({}))) as ApiErrorBody & {
         message?: string;
-        error?: string;
       };
 
       if (!response.ok) {
-        setError(data.message ?? data.error ?? "Login failed. Please try again.");
+        setError(
+          data.error?.message ??
+            (typeof data.message === "string" ? data.message : undefined) ??
+            "Sign-in failed. Check your admin ID and password.",
+        );
         return;
       }
 
@@ -43,14 +51,25 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
       <FormField
-        id="email"
-        label="Email"
+        id="adminId"
+        label="Admin ID"
         type="email"
-        value={email}
-        onChange={setEmail}
-        placeholder="admin1@test.com"
+        value={adminId}
+        onChange={setAdminId}
+        placeholder="admin@company.com"
+        help="Use the email registered for your admin account."
         required
-        autoComplete="email"
+        autoComplete="username"
+      />
+
+      <FormField
+        id="password"
+        label="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        required
+        autoComplete="current-password"
       />
 
       {error ? (
@@ -77,6 +96,7 @@ function FormField({
   value,
   onChange,
   placeholder,
+  help,
   required,
   autoComplete,
 }: {
@@ -86,6 +106,7 @@ function FormField({
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  help?: string;
   required?: boolean;
   autoComplete?: string;
 }) {
@@ -102,6 +123,7 @@ function FormField({
         autoComplete={autoComplete}
         className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-900/10 transition focus:border-zinc-900 focus:ring-2"
       />
+      {help ? <span className="text-xs text-zinc-500">{help}</span> : null}
     </label>
   );
 }

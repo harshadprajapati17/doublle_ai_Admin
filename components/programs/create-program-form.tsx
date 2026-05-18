@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form-primitives";
 import { useActivateProgram } from "@/hooks/use-activate-program";
 import { useCreateProgram } from "@/hooks/use-create-program";
+import { useUpdateProgram } from "@/hooks/use-update-program";
 import {
   ATTRIBUTION_RULE_OPTIONS,
   CAP_BEHAVIOR_OPTIONS,
@@ -28,6 +29,7 @@ import {
 } from "@/lib/programs/constants";
 import {
   FORM_DEFAULT_VALUES,
+  programToFormValues,
   RECOMMENDED_DEFAULTS,
 } from "@/lib/programs/defaults";
 import {
@@ -36,9 +38,15 @@ import {
 } from "@/lib/programs/schema";
 import type { Program } from "@/lib/programs/types";
 
-export function CreateProgramForm() {
+type ProgramFormProps = {
+  program?: Program;
+};
+
+export function CreateProgramForm({ program }: ProgramFormProps = {}) {
+  const isEdit = Boolean(program);
   const router = useRouter();
   const { createProgram, isLoading: isCreating } = useCreateProgram();
+  const { updateProgram, isLoading: isUpdating } = useUpdateProgram();
   const { activateProgram, isLoading: isActivating } = useActivateProgram();
   const [createdProgram, setCreatedProgram] = useState<Program | null>(null);
 
@@ -52,7 +60,7 @@ export function CreateProgramForm() {
     formState: { errors, isValid, isSubmitting },
   } = useForm<CreateProgramFormValues>({
     resolver: zodResolver(createProgramFormSchema),
-    defaultValues: FORM_DEFAULT_VALUES,
+    defaultValues: program ? programToFormValues(program) : FORM_DEFAULT_VALUES,
     mode: "onBlur",
   });
 
@@ -85,6 +93,22 @@ export function CreateProgramForm() {
   }, [lifetimeCapUnlimited, setValue]);
 
   async function onSubmit(values: CreateProgramFormValues) {
+    if (isEdit && program) {
+      const result = await updateProgram(program.id, values);
+
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Program updated", {
+        description: `${result.program.name} was saved.`,
+      });
+      router.push(`/dashboard/programs/${result.program.id}`);
+      router.refresh();
+      return;
+    }
+
     const result = await createProgram(values);
 
     if (!result.ok) {
@@ -125,7 +149,7 @@ export function CreateProgramForm() {
     toast.message("Recommended defaults applied");
   }
 
-  const isBusy = isCreating || isSubmitting || isActivating;
+  const isBusy = isCreating || isUpdating || isSubmitting || isActivating;
   const showMonthlyCapBehavior = !monthlyCapUnlimited;
 
   return (
@@ -137,22 +161,26 @@ export function CreateProgramForm() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Create referral program
+            {isEdit ? "Edit referral program" : "Create referral program"}
           </h1>
           <p className="mt-1 text-sm text-zinc-600">
-            New programs are saved as drafts until you activate them.
+            {isEdit
+              ? "Changes are saved with a PATCH to the program API."
+              : "New programs are saved as drafts until you activate them."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={applyRecommendedDefaults}
-          className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
-        >
-          Use recommended defaults
-        </button>
+        {!isEdit ? (
+          <button
+            type="button"
+            onClick={applyRecommendedDefaults}
+            className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+          >
+            Use recommended defaults
+          </button>
+        ) : null}
       </div>
 
-      {createdProgram ? (
+      {!isEdit && createdProgram ? (
         <CreatedProgramBanner
           program={createdProgram}
           isActivating={isActivating}
@@ -324,7 +352,7 @@ export function CreateProgramForm() {
 
       <SectionCard
         title="Referee benefit"
-        description="Optional incentive for new customers who sign up via a referral."
+        description="Optional incentive for new customers who sign up via a referral. Account credit is AI product usage, not monetary."
       >
         <Field label="Referee benefit" htmlFor="refereeBenefitType">
           <Controller
@@ -368,15 +396,19 @@ export function CreateProgramForm() {
 
         {refereeBenefitType === "CREDIT" ? (
           <Field
-            label="Credit amount"
+            label="Product credit amount"
             htmlFor="refereeBenefitValue"
+            helpId="refereeBenefitValue-help"
+            help="Internal AI product credits for the referee — not cash or a currency amount."
             required
             className="max-w-xs"
             error={errors.refereeBenefitValue?.message}
           >
-            <CurrencyInput
+            <NumberInput
               id="refereeBenefitValue"
-              currency={currency}
+              step={1}
+              min={1}
+              suffix="credits"
               invalid={Boolean(errors.refereeBenefitValue)}
               {...register("refereeBenefitValue", {
                 valueAsNumber: true,
@@ -493,17 +525,23 @@ export function CreateProgramForm() {
       <footer className="fixed inset-x-0 bottom-0 z-10 border-t border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto flex max-w-3xl items-center justify-end gap-3 px-6 py-4">
           <Link
-            href="/dashboard"
+            href={isEdit && program ? `/dashboard/programs/${program.id}` : "/dashboard"}
             className="rounded-md px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
           >
             Cancel
           </Link>
           <button
             type="submit"
-            disabled={!isValid || isBusy || Boolean(createdProgram)}
+            disabled={!isValid || isBusy || (!isEdit && Boolean(createdProgram))}
             className="rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isCreating ? "Creating program…" : "Create program"}
+            {isUpdating
+              ? "Saving changes…"
+              : isCreating
+                ? "Creating program…"
+                : isEdit
+                  ? "Save changes"
+                  : "Create program"}
           </button>
         </div>
       </footer>

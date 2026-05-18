@@ -54,3 +54,12 @@ export type ApiErrorBody = {
     details?: unknown;
   };
 };
+
+export type ProgramListMeta = {
+  nextCursor?: string | null;
+};
+
+export type ProgramListResponse = {
+  data?: Program[];
+  meta?: ProgramListMeta;
+} & ApiErrorBody;

@@ -1,4 +1,32 @@
 import type { CreateProgramFormValues } from "@/lib/programs/schema";
+import type { Program } from "@/lib/programs/types";
+
+function toFormNumber(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function programToFormValues(program: Program): CreateProgramFormValues {
+  return {
+    name: program.name,
+    termsVersion: program.termsVersion,
+    currency: program.currency,
+    referrerRewardPct: Number(program.referrerRewardPct),
+    referrerRewardDurationMonths: program.referrerRewardDurationMonths,
+    holdPeriodDays: program.holdPeriodDays,
+    cookieDays: program.cookieDays,
+    attributionRule: program.attributionRule,
+    refereeBenefitType: program.refereeBenefitType,
+    refereeBenefitValue: toFormNumber(program.refereeBenefitValue),
+    refereeBenefitTrialDays: program.refereeBenefitTrialDays,
+    monthlyCap: toFormNumber(program.monthlyCap),
+    monthlyCapUnlimited: program.monthlyCap === null,
+    lifetimeCap: toFormNumber(program.lifetimeCap),
+    lifetimeCapUnlimited: program.lifetimeCap === null,
+    capBehavior: program.capBehavior,
+  };
+}
 
 export const RECOMMENDED_DEFAULTS: CreateProgramFormValues = {
   name: "Standard Referral",
