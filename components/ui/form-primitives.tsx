@@ -13,10 +13,10 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <header className="mb-6 border-b border-zinc-100 pb-4">
-        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
-        <p className="mt-1 text-sm text-zinc-600">{description}</p>
+    <section className="rounded-2xl border border-card-border bg-card p-6 shadow-(--shadow-card) sm:p-8">
+      <header className="mb-6 border-b border-card-border pb-4">
+        <h2 className="text-base font-semibold text-ink">{title}</h2>
+        <p className="mt-1 text-sm text-ink-secondary">{description}</p>
       </header>
       <div className="flex flex-col gap-5">{children}</div>
     </section>
@@ -52,13 +52,13 @@ export function Field({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="text-sm font-medium text-zinc-700">
+      <label htmlFor={htmlFor} className="text-sm font-medium text-ink">
         {label}
         {required ? <span className="text-red-600"> *</span> : null}
       </label>
       <div aria-describedby={describedBy || undefined}>{children}</div>
       {help ? (
-        <p id={helpId} className="text-xs text-zinc-500">
+        <p id={helpId} className="text-xs text-ink-muted">
           {help}
         </p>
       ) : null}
@@ -80,10 +80,10 @@ export function TextInput({
     <input
       {...props}
       className={cn(
-        "w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:ring-2",
+        "w-full rounded-lg border bg-card px-3 py-2.5 text-sm text-ink outline-none transition focus:ring-2",
         invalid
           ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
-          : "border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900/10",
+          : "border-card-border focus:border-ink focus:ring-ink/10",
         className,
       )}
     />
@@ -103,10 +103,10 @@ export function SelectInput({
     <select
       {...props}
       className={cn(
-        "w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:ring-2",
+        "w-full rounded-lg border bg-card px-3 py-2.5 text-sm text-ink outline-none transition focus:ring-2",
         invalid
           ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
-          : "border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900/10",
+          : "border-card-border focus:border-ink focus:ring-ink/10",
         className,
       )}
     >
@@ -137,7 +137,7 @@ export function NumberInput({
         {...props}
       />
       <span
-        className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-zinc-500"
+        className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-ink-muted"
         aria-hidden
       >
         {suffix}
@@ -157,7 +157,7 @@ export function CurrencyInput({
 }) {
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-zinc-500">
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-ink-muted">
         {currency}
       </span>
       <TextInput
@@ -202,8 +202,8 @@ export function RadioCardGroup<T extends string>({
             className={cn(
               "flex cursor-pointer gap-3 rounded-lg border p-4 transition",
               checked
-                ? "border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900"
-                : "border-zinc-200 hover:border-zinc-300",
+                ? "border-ink bg-accent-soft ring-1 ring-ink"
+                : "border-card-border hover:border-ink/20",
               invalid && !checked && "border-red-200",
             )}
           >
@@ -214,13 +214,13 @@ export function RadioCardGroup<T extends string>({
               value={option.value}
               checked={checked}
               onChange={() => onChange(option.value)}
-              className="mt-0.5 size-4 shrink-0 accent-zinc-900"
+              className="mt-0.5 size-4 shrink-0 accent-ink"
             />
             <span>
-              <span className="block text-sm font-medium text-zinc-900">
+              <span className="block text-sm font-medium text-ink">
                 {option.label}
               </span>
-              <span className="mt-0.5 block text-xs text-zinc-600">
+              <span className="mt-0.5 block text-xs text-ink-secondary">
                 {option.description}
               </span>
             </span>
@@ -246,7 +246,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="radiogroup"
       aria-label={name}
-      className="inline-flex w-full flex-wrap gap-1 rounded-lg border border-zinc-200 bg-zinc-100 p-1 sm:w-auto"
+      className="inline-flex w-full flex-wrap gap-1 rounded-lg border border-card-border bg-surface p-1 sm:w-auto"
     >
       {options.map((option) => {
         const selected = value === option.value;
@@ -260,8 +260,8 @@ export function SegmentedControl<T extends string>({
             className={cn(
               "flex-1 rounded-md px-3 py-2 text-sm font-medium transition sm:flex-none",
               selected
-                ? "bg-white text-zinc-900 shadow-sm"
-                : "text-zinc-600 hover:text-zinc-900",
+                ? "bg-card text-ink shadow-sm"
+                : "text-ink-secondary hover:text-ink",
             )}
           >
             {option.label}
@@ -286,13 +286,13 @@ export function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-card-border bg-surface/80 px-4 py-3">
       <div>
-        <label htmlFor={id} className="text-sm font-medium text-zinc-800">
+        <label htmlFor={id} className="text-sm font-medium text-ink">
           {label}
         </label>
         {description ? (
-          <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
+          <p className="mt-0.5 text-xs text-ink-muted">{description}</p>
         ) : null}
       </div>
       <input
@@ -300,7 +300,7 @@ export function ToggleRow({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-4 shrink-0 accent-zinc-900"
+        className="mt-0.5 size-4 shrink-0 accent-ink"
       />
     </div>
   );

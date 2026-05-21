@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { PrimaryButton } from "@/components/ui/dashboard";
 import type { ApiErrorBody } from "@/lib/programs/types";
 
 export function LoginForm() {
@@ -49,10 +50,10 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <FormField
         id="adminId"
-        label="Admin ID"
+        label="Admin email"
         type="email"
         value={adminId}
         onChange={setAdminId}
@@ -73,18 +74,14 @@ export function LoginForm() {
       />
 
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isLoading ? "Signing in..." : "Sign in"}
-      </button>
+      <PrimaryButton type="submit" disabled={isLoading} className="w-full">
+        {isLoading ? "Signing in…" : "Sign in"}
+      </PrimaryButton>
     </form>
   );
 }
@@ -112,7 +109,7 @@ function FormField({
 }) {
   return (
     <label htmlFor={id} className="flex flex-col gap-1.5 text-sm">
-      <span className="font-medium text-zinc-700">{label}</span>
+      <span className="font-medium text-ink">{label}</span>
       <input
         id={id}
         type={type}
@@ -121,9 +118,9 @@ function FormField({
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
-        className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-900/10 transition focus:border-zinc-900 focus:ring-2"
+        className="rounded-lg border border-card-border bg-card px-3 py-2.5 text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-ink/10"
       />
-      {help ? <span className="text-xs text-zinc-500">{help}</span> : null}
+      {help ? <span className="text-xs text-ink-muted">{help}</span> : null}
     </label>
   );
 }

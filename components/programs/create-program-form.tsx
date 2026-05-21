@@ -160,10 +160,13 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+          <p className="text-sm font-medium text-accent">
+            {isEdit ? "Edit program" : "New program"}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
             {isEdit ? "Edit referral program" : "Create referral program"}
           </h1>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-2 text-sm text-ink-secondary">
             {isEdit
               ? "Changes are saved with a PATCH to the program API."
               : "New programs are saved as drafts until you activate them."}
@@ -173,7 +176,7 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
           <button
             type="button"
             onClick={applyRecommendedDefaults}
-            className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+            className="rounded-lg border border-card-border bg-card px-4 py-2 text-sm font-medium text-ink transition hover:bg-surface"
           >
             Use recommended defaults
           </button>
@@ -522,18 +525,18 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
         </div>
       </SectionCard>
 
-      <footer className="fixed inset-x-0 bottom-0 z-10 border-t border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <footer className="fixed inset-x-0 bottom-0 z-10 border-t border-card-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="mx-auto flex max-w-3xl items-center justify-end gap-3 px-6 py-4">
           <Link
             href={isEdit && program ? `/dashboard/programs/${program.id}` : "/dashboard"}
-            className="rounded-md px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+            className="rounded-lg px-4 py-2.5 text-sm font-medium text-ink-secondary transition hover:bg-surface"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={!isValid || isBusy || (!isEdit && Boolean(createdProgram))}
-            className="rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isUpdating
               ? "Saving changes…"

@@ -1,4 +1,11 @@
-import { ReferralsList } from "@/components/referrals/referrals-list";
+import {
+  CardBody,
+  CardHeader,
+  ErrorBanner,
+  PageHeader,
+  SurfaceCard,
+} from "@/components/ui/dashboard";
+import { ReferralsTable } from "@/components/referrals/referrals-table";
 import {
   adminUpstreamFetch,
   parseUpstreamJson,
@@ -8,49 +15,67 @@ import type { ReferralListResponse } from "@/lib/referrals/types";
 
 export default async function ReferralsPage() {
   const upstream = await adminUpstreamFetch(
-    "/api/v1/admin/referrals?limit=20",
+    "/api/v1/admin/referrals?limit=100",
     { method: "GET" },
   );
 
   const payload = await parseUpstreamJson<ReferralListResponse>(upstream);
   const referrals = upstream.ok ? (payload.data ?? []) : [];
+  const activeCount = referrals.filter((r) => r.status === "ACTIVE").length;
+  const paidCount = referrals.filter(
+    (r) =>
+      r.payment.hasPaid ||
+      r.payment.capturedPaymentCount > 0 ||
+      Number.parseFloat(r.payment.totalPaidAmount) > 0,
+  ).length;
   const listError =
     !upstream.ok
       ? (payload.error?.message ?? "Could not load referrals.")
       : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Referrals
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          View attributed referrals, referrer and referee details, and payment
-          status.
-        </p>
-      </header>
+    <>
+      <PageHeader
+        eyebrow="Referrals"
+        title="Manage referrals"
+        description="Search by code, review referrer and referee attribution, and filter rows that have recorded payouts."
+      />
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-900">
-            All referrals
-          </h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Recent referral attributions across active programs.
-          </p>
-        </div>
-        {listError ? (
-          <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {listError}
-          </p>
-        ) : (
-          <ReferralsList
-            referrals={referrals}
-            referralAppOrigin={getReferralAppOrigin()}
-          />
-        )}
-      </section>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Total referrals" value={String(referrals.length)} />
+        <StatCard label="Active" value={String(activeCount)} />
+        <StatCard label="With payout" value={String(paidCount)} />
+      </div>
+
+      <SurfaceCard>
+        <CardHeader
+          title="Referral registry"
+          description="Use search and filters to find attributions quickly. Click a row to view code, link, and full details."
+        />
+        <CardBody>
+          {listError ? (
+            <ErrorBanner message={listError} />
+          ) : (
+            <ReferralsTable
+              referrals={referrals}
+              referralAppOrigin={getReferralAppOrigin()}
+            />
+          )}
+        </CardBody>
+      </SurfaceCard>
+    </>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-card-border bg-card px-5 py-4 shadow-(--shadow-card)">
+      <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+        {label}
+      </p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-ink">
+        {value}
+      </p>
     </div>
   );
 }

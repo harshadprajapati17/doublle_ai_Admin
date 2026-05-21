@@ -2,8 +2,16 @@ import type { ApiErrorBody } from "@/lib/programs/types";
 
 export type ReferralUser = {
   userId: string;
-  email: string;
-  name: string;
+  email: string | null;
+  name: string | null;
+};
+
+export type ReferralFraud = {
+  status: string;
+  flagged: boolean;
+  signalCount: number;
+  maxScore: string | null;
+  types: string[];
 };
 
 export type ReferralPayment = {
@@ -21,6 +29,7 @@ export type Referral = {
   referrer: ReferralUser;
   referee: ReferralUser;
   payment: ReferralPayment;
+  fraud: ReferralFraud;
   programId: string;
   code: string;
   status: string;
