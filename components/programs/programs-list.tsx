@@ -22,8 +22,8 @@ export function ProgramsList({ programs }: { programs: Program[] }) {
                 {program.name}
               </p>
               <p className="mt-1 text-xs text-ink-muted">
-                {program.referrerRewardPct}% reward · {program.currency} · v
-                {program.termsVersion}
+                {program.referrerRewardPct}% reward ·{" "}
+                {program.refereeBenefitValue} credits for referees
               </p>
             </div>
             <StatusPill tone={statusTone(program.status)}>

@@ -2,31 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-  CurrencyInput,
+  ConfigZone,
   Field,
-  FieldGroup,
-  NumberInput,
-  RadioCardGroup,
-  SectionCard,
-  SegmentedControl,
-  SelectInput,
+  MetricNumberField,
+  ProgramConfigCard,
   TextInput,
-  ToggleRow,
 } from "@/components/ui/form-primitives";
-import { useActivateProgram } from "@/hooks/use-activate-program";
 import { useCreateProgram } from "@/hooks/use-create-program";
 import { useUpdateProgram } from "@/hooks/use-update-program";
-import {
-  ATTRIBUTION_RULE_OPTIONS,
-  CAP_BEHAVIOR_OPTIONS,
-  CURRENCY_OPTIONS,
-  REFEREE_BENEFIT_OPTIONS,
-} from "@/lib/programs/constants";
 import {
   FORM_DEFAULT_VALUES,
   programToFormValues,
@@ -44,19 +33,19 @@ type ProgramFormProps = {
 
 export function CreateProgramForm({ program }: ProgramFormProps = {}) {
   const isEdit = Boolean(program);
+  const isDraftEdit = isEdit && program?.status === "DRAFT";
+  const showCreateProgramAction = !isEdit || isDraftEdit;
   const router = useRouter();
   const { createProgram, isLoading: isCreating } = useCreateProgram();
   const { updateProgram, isLoading: isUpdating } = useUpdateProgram();
-  const { activateProgram, isLoading: isActivating } = useActivateProgram();
-  const [createdProgram, setCreatedProgram] = useState<Program | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const {
     register,
-    control,
     handleSubmit,
     reset,
-    watch,
-    setValue,
+    trigger,
+    getValues,
     formState: { errors, isValid, isSubmitting },
   } = useForm<CreateProgramFormValues>({
     resolver: zodResolver(createProgramFormSchema),
@@ -64,35 +53,7 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
     mode: "onBlur",
   });
 
-  const refereeBenefitType = watch("refereeBenefitType");
-  const monthlyCapUnlimited = watch("monthlyCapUnlimited");
-  const lifetimeCapUnlimited = watch("lifetimeCapUnlimited");
-  const currency = watch("currency");
-
-  useEffect(() => {
-    if (refereeBenefitType === "NONE") {
-      setValue("refereeBenefitValue", null, { shouldValidate: true });
-      setValue("refereeBenefitTrialDays", null, { shouldValidate: true });
-    } else if (refereeBenefitType === "TRIAL_EXTENSION") {
-      setValue("refereeBenefitValue", null, { shouldValidate: true });
-    } else if (refereeBenefitType === "CREDIT") {
-      setValue("refereeBenefitTrialDays", null, { shouldValidate: true });
-    }
-  }, [refereeBenefitType, setValue]);
-
-  useEffect(() => {
-    if (monthlyCapUnlimited) {
-      setValue("monthlyCap", null, { shouldValidate: true });
-    }
-  }, [monthlyCapUnlimited, setValue]);
-
-  useEffect(() => {
-    if (lifetimeCapUnlimited) {
-      setValue("lifetimeCap", null, { shouldValidate: true });
-    }
-  }, [lifetimeCapUnlimited, setValue]);
-
-  async function onSubmit(values: CreateProgramFormValues) {
+  async function saveDraft(values: CreateProgramFormValues) {
     if (isEdit && program) {
       const result = await updateProgram(program.id, values);
 
@@ -101,8 +62,8 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
         return;
       }
 
-      toast.success("Program updated", {
-        description: `${result.program.name} was saved.`,
+      toast.success(isDraftEdit ? "Draft saved" : "Changes saved", {
+        description: `${result.program.name} was updated.`,
       });
       router.push(`/dashboard/programs/${result.program.id}`);
       router.refresh();
@@ -116,91 +77,109 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
       return;
     }
 
-    setCreatedProgram(result.program);
-    toast.success("Referral program created as draft", {
+    toast.success("Draft saved", {
       description: `${result.program.name} is ready to review.`,
-      action: {
-        label: "View program",
-        onClick: () => router.push(`/dashboard/programs/${result.program.id}`),
-      },
     });
+    router.push(`/dashboard/programs/${result.program.id}`);
+    router.refresh();
   }
 
-  async function handleActivate(force = false) {
-    if (!createdProgram) return;
+  async function saveAndActivate(values: CreateProgramFormValues) {
+    if (isEdit && program) {
+      const result = await updateProgram(program.id, values, { activate: true });
 
-    const result = await activateProgram(createdProgram.id, { force });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Program activated", {
+        description: `${result.program.name} is now visible to users.`,
+      });
+      router.push(`/dashboard/programs/${result.program.id}`);
+      router.refresh();
+      return;
+    }
+
+    const result = await createProgram(values, { activate: true });
 
     if (!result.ok) {
       toast.error(result.message);
       return;
     }
 
-    toast.success("Program activated", {
-      description: force
-        ? "This program is now active (previous active program was replaced)."
-        : "This program is now the active referral program.",
+    toast.success("Program created", {
+      description: `${result.program.name} is now visible to users.`,
     });
     router.push(`/dashboard/programs/${result.program.id}`);
+    router.refresh();
   }
 
-  function applyRecommendedDefaults() {
+  async function handleSaveDraftClick() {
+    await handleSubmit(saveDraft)();
+  }
+
+  async function handleCreateProgramClick() {
+    const valid = await trigger();
+    if (!valid) return;
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmActivate() {
+    setConfirmOpen(false);
+    await saveAndActivate(getValues());
+  }
+
+  async function handleConfirmSaveDraft() {
+    setConfirmOpen(false);
+    await saveDraft(getValues());
+  }
+
+  function fillSampleValues() {
     reset(RECOMMENDED_DEFAULTS);
-    toast.message("Recommended defaults applied");
+    toast.message("Sample values applied");
   }
 
-  const isBusy = isCreating || isUpdating || isSubmitting || isActivating;
-  const showMonthlyCapBehavior = !monthlyCapUnlimited;
+  const isBusy = isCreating || isUpdating || isSubmitting;
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="flex flex-col gap-8 pb-28"
-    >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-accent">
-            {isEdit ? "Edit program" : "New program"}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
-            {isEdit ? "Edit referral program" : "Create referral program"}
-          </h1>
-          <p className="mt-2 text-sm text-ink-secondary">
-            {isEdit
-              ? "Changes are saved with a PATCH to the program API."
-              : "New programs are saved as drafts until you activate them."}
-          </p>
-        </div>
-        {!isEdit ? (
-          <button
-            type="button"
-            onClick={applyRecommendedDefaults}
-            className="rounded-lg border border-card-border bg-card px-4 py-2 text-sm font-medium text-ink transition hover:bg-surface"
-          >
-            Use recommended defaults
-          </button>
-        ) : null}
-      </div>
-
-      {!isEdit && createdProgram ? (
-        <CreatedProgramBanner
-          program={createdProgram}
-          isActivating={isActivating}
-          onActivate={() => handleActivate(false)}
-          onForceActivate={() => handleActivate(true)}
-        />
-      ) : null}
-
-      <SectionCard
-        title="Program basics"
-        description="Name and legal terms for this referral program."
+    <>
+      <form
+        onSubmit={(event) => event.preventDefault()}
+        noValidate
+        className="flex flex-col gap-6 pb-28"
       >
-        <FieldGroup>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-accent">
+              {isEdit ? "Edit program" : "New program"}
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
+              {isEdit ? "Edit referral program" : "Create referral program"}
+            </h1>
+            <p className="mt-2 text-sm text-ink-secondary">
+              {isEdit
+                ? isDraftEdit
+                  ? "Save a draft to keep changes private, or activate when you are ready for users to see this program."
+                  : "Update program settings. Changes are saved to the current program."
+                : "Save a draft to configure the program first, or create and activate when you are ready for users to see it."}
+            </p>
+          </div>
+          {!isEdit ? (
+            <button
+              type="button"
+              onClick={fillSampleValues}
+              className="shrink-0 self-start text-sm text-ink-secondary underline-offset-4 transition hover:text-ink hover:underline"
+            >
+              Fill sample values
+            </button>
+          ) : null}
+        </div>
+
+        <ProgramConfigCard>
           <Field
             label="Program name"
             htmlFor="name"
-            helpId="name-help"
             required
             error={errors.name?.message}
           >
@@ -208,398 +187,167 @@ export function CreateProgramForm({ program }: ProgramFormProps = {}) {
               id="name"
               placeholder="Standard Referral"
               invalid={Boolean(errors.name)}
+              className="text-base py-3"
               {...register("name")}
             />
           </Field>
-          <Field
-            label="Terms version"
-            htmlFor="termsVersion"
-            helpId="termsVersion-help"
-            help="Legal terms version referrers must accept (e.g. v1)"
-            required
-            error={errors.termsVersion?.message}
-          >
-            <TextInput
-              id="termsVersion"
-              placeholder="v1"
-              invalid={Boolean(errors.termsVersion)}
-              {...register("termsVersion")}
-            />
-          </Field>
-        </FieldGroup>
-        <Field
-          label="Currency"
-          htmlFor="currency"
-          className="max-w-xs"
-          error={errors.currency?.message}
-        >
-          <SelectInput
-            id="currency"
-            invalid={Boolean(errors.currency)}
-            {...register("currency")}
-          >
-            {CURRENCY_OPTIONS.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </SelectInput>
-        </Field>
-      </SectionCard>
 
-      <SectionCard
-        title="Referrer reward"
-        description="Commission paid to referrers when their referee generates revenue."
-      >
-        <FieldGroup>
-          <Field
-            label="Referrer reward (%)"
-            htmlFor="referrerRewardPct"
-            helpId="referrerRewardPct-help"
-            help="% of referee net revenue paid to referrer"
-            required
-            error={errors.referrerRewardPct?.message}
+          <ConfigZone
+            title="Referrer economics"
+            description="Commission paid when a referee generates revenue."
           >
-            <NumberInput
-              id="referrerRewardPct"
-              step="0.01"
-              min={0}
-              max={100}
-              suffix="%"
-              invalid={Boolean(errors.referrerRewardPct)}
-              {...register("referrerRewardPct", { valueAsNumber: true })}
-            />
-          </Field>
-          <Field
-            label="Reward duration (months)"
-            htmlFor="referrerRewardDurationMonths"
-            helpId="referrerRewardDurationMonths-help"
-            help="Months of commission after referee’s first paid invoice"
-            required
-            error={errors.referrerRewardDurationMonths?.message}
-          >
-            <NumberInput
-              id="referrerRewardDurationMonths"
-              step={1}
-              min={1}
-              max={240}
-              invalid={Boolean(errors.referrerRewardDurationMonths)}
-              {...register("referrerRewardDurationMonths", {
-                valueAsNumber: true,
-              })}
-            />
-          </Field>
-          <Field
-            label="Hold period (days)"
-            htmlFor="holdPeriodDays"
-            helpId="holdPeriodDays-help"
-            help="Days after payment before commission becomes payable"
-            required
-            error={errors.holdPeriodDays?.message}
-          >
-            <NumberInput
-              id="holdPeriodDays"
-              step={1}
-              min={0}
-              max={365}
-              invalid={Boolean(errors.holdPeriodDays)}
-              {...register("holdPeriodDays", { valueAsNumber: true })}
-            />
-          </Field>
-        </FieldGroup>
-      </SectionCard>
-
-      <SectionCard
-        title="Attribution & tracking"
-        description="How referral clicks are remembered and credited at signup."
-      >
-        <Field
-          label="Cookie window (days)"
-          htmlFor="cookieDays"
-          helpId="cookieDays-help"
-          help="How long a referral click is remembered"
-          required
-          className="max-w-xs"
-          error={errors.cookieDays?.message}
-        >
-          <NumberInput
-            id="cookieDays"
-            step={1}
-            min={1}
-            max={365}
-            invalid={Boolean(errors.cookieDays)}
-            {...register("cookieDays", { valueAsNumber: true })}
-          />
-        </Field>
-        <Field
-          label="Attribution rule"
-          htmlFor="attributionRule"
-          required
-          error={errors.attributionRule?.message}
-        >
-          <Controller
-            name="attributionRule"
-            control={control}
-            render={({ field }) => (
-              <RadioCardGroup
-                name="attributionRule"
-                value={field.value}
-                onChange={field.onChange}
-                options={ATTRIBUTION_RULE_OPTIONS}
-                invalid={Boolean(errors.attributionRule)}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <MetricNumberField
+                id="referrerRewardPct"
+                label="Commission"
+                suffix="%"
+                hint="% of net revenue"
+                step="0.01"
+                min={0}
+                max={100}
+                required
+                invalid={Boolean(errors.referrerRewardPct)}
+                error={errors.referrerRewardPct?.message}
+                {...register("referrerRewardPct", { valueAsNumber: true })}
               />
-            )}
-          />
-        </Field>
-      </SectionCard>
-
-      <SectionCard
-        title="Referee benefit"
-        description="Optional incentive for new customers who sign up via a referral. Account credit is AI product usage, not monetary."
-      >
-        <Field label="Referee benefit" htmlFor="refereeBenefitType">
-          <Controller
-            name="refereeBenefitType"
-            control={control}
-            render={({ field }) => (
-              <SegmentedControl
-                name="refereeBenefitType"
-                value={field.value}
-                onChange={field.onChange}
-                options={REFEREE_BENEFIT_OPTIONS}
+              <MetricNumberField
+                id="referrerRewardDurationMonths"
+                label="Duration"
+                suffix="months"
+                hint="After referee’s first paid invoice"
+                step={1}
+                min={1}
+                max={240}
+                required
+                invalid={Boolean(errors.referrerRewardDurationMonths)}
+                error={errors.referrerRewardDurationMonths?.message}
+                {...register("referrerRewardDurationMonths", {
+                  valueAsNumber: true,
+                })}
               />
-            )}
-          />
-        </Field>
+              <MetricNumberField
+                id="holdPeriodDays"
+                label="Hold"
+                suffix="days"
+                hint="Before commission is payable"
+                step={1}
+                min={0}
+                max={365}
+                required
+                invalid={Boolean(errors.holdPeriodDays)}
+                error={errors.holdPeriodDays?.message}
+                {...register("holdPeriodDays", { valueAsNumber: true })}
+              />
+            </div>
+          </ConfigZone>
 
-        {refereeBenefitType === "TRIAL_EXTENSION" ? (
-          <Field
-            label="Extra trial days"
-            htmlFor="refereeBenefitTrialDays"
-            required
-            className="max-w-xs"
-            error={errors.refereeBenefitTrialDays?.message}
+          <ConfigZone
+            title="Referee benefit"
+            description="Product credit for new customers (AI usage, not cash)."
           >
-            <NumberInput
-              id="refereeBenefitTrialDays"
-              step={1}
-              min={1}
-              max={365}
-              invalid={Boolean(errors.refereeBenefitTrialDays)}
-              {...register("refereeBenefitTrialDays", {
-                valueAsNumber: true,
-                setValueAs: (value) =>
-                  value === "" || Number.isNaN(Number(value))
-                    ? null
-                    : Number(value),
-              })}
-            />
-          </Field>
-        ) : null}
+            <input type="hidden" {...register("refereeBenefitType")} />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <MetricNumberField
+                id="refereeBenefitValue"
+                label="Credits"
+                suffix="credits"
+                hint="AI product usage — not cash or currency"
+                step={1}
+                min={1}
+                required
+                invalid={Boolean(errors.refereeBenefitValue)}
+                error={errors.refereeBenefitValue?.message}
+                {...register("refereeBenefitValue", { valueAsNumber: true })}
+              />
+            </div>
+          </ConfigZone>
+        </ProgramConfigCard>
 
-        {refereeBenefitType === "CREDIT" ? (
-          <Field
-            label="Product credit amount"
-            htmlFor="refereeBenefitValue"
-            helpId="refereeBenefitValue-help"
-            help="Internal AI product credits for the referee — not cash or a currency amount."
-            required
-            className="max-w-xs"
-            error={errors.refereeBenefitValue?.message}
-          >
-            <NumberInput
-              id="refereeBenefitValue"
-              step={1}
-              min={1}
-              suffix="credits"
-              invalid={Boolean(errors.refereeBenefitValue)}
-              {...register("refereeBenefitValue", {
-                valueAsNumber: true,
-                setValueAs: (value) =>
-                  value === "" || Number.isNaN(Number(value))
-                    ? null
-                    : Number(value),
-              })}
-            />
-          </Field>
-        ) : null}
-      </SectionCard>
-
-      <SectionCard
-        title="Caps & limits"
-        description="Maximum commission a single referrer can earn on this program."
-      >
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3">
-            <ToggleRow
-              id="monthlyCapUnlimited"
-              label="No monthly limit"
-              description="Uncapped monthly earnings per referrer"
-              checked={monthlyCapUnlimited}
-              onChange={(checked) =>
-                setValue("monthlyCapUnlimited", checked, { shouldValidate: true })
+        <footer className="fixed bottom-0 left-sidebar right-0 z-10 border-t border-card-border bg-card/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-card/80 sm:px-10 lg:px-12">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-3 py-4">
+            <Link
+              href={
+                isEdit && program
+                  ? `/dashboard/programs/${program.id}`
+                  : "/dashboard"
               }
-            />
-            {!monthlyCapUnlimited ? (
-              <Field
-                label="Monthly cap per referrer"
-                htmlFor="monthlyCap"
-                helpId="monthlyCap-help"
-                help="Max commission one referrer can earn per calendar month"
-                error={errors.monthlyCap?.message}
-              >
-                <CurrencyInput
-                  id="monthlyCap"
-                  currency={currency}
-                  invalid={Boolean(errors.monthlyCap)}
-                  {...register("monthlyCap", {
-                    valueAsNumber: true,
-                    setValueAs: (value) =>
-                      value === "" || Number.isNaN(Number(value))
-                        ? null
-                        : Number(value),
-                  })}
-                />
-              </Field>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <ToggleRow
-              id="lifetimeCapUnlimited"
-              label="No lifetime limit"
-              description="Uncapped total earnings per referrer"
-              checked={lifetimeCapUnlimited}
-              onChange={(checked) =>
-                setValue("lifetimeCapUnlimited", checked, {
-                  shouldValidate: true,
-                })
-              }
-            />
-            {!lifetimeCapUnlimited ? (
-              <Field
-                label="Lifetime cap per referrer"
-                htmlFor="lifetimeCap"
-                helpId="lifetimeCap-help"
-                help="Max total commission per referrer on this program"
-                error={errors.lifetimeCap?.message}
-              >
-                <CurrencyInput
-                  id="lifetimeCap"
-                  currency={currency}
-                  invalid={Boolean(errors.lifetimeCap)}
-                  {...register("lifetimeCap", {
-                    valueAsNumber: true,
-                    setValueAs: (value) =>
-                      value === "" || Number.isNaN(Number(value))
-                        ? null
-                        : Number(value),
-                  })}
-                />
-              </Field>
-            ) : null}
-          </div>
-
-          {showMonthlyCapBehavior ? (
-            <Field
-              label="When monthly cap is hit"
-              htmlFor="capBehavior"
-              required
-              error={errors.capBehavior?.message}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-ink-secondary transition hover:bg-surface"
             >
-              <Controller
-                name="capBehavior"
-                control={control}
-                render={({ field }) => (
-                  <RadioCardGroup
-                    name="capBehavior"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={CAP_BEHAVIOR_OPTIONS}
-                    invalid={Boolean(errors.capBehavior)}
-                  />
-                )}
-              />
-            </Field>
-          ) : null}
-        </div>
-      </SectionCard>
-
-      <footer className="fixed inset-x-0 bottom-0 z-10 border-t border-card-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="mx-auto flex max-w-3xl items-center justify-end gap-3 px-6 py-4">
-          <Link
-            href={isEdit && program ? `/dashboard/programs/${program.id}` : "/dashboard"}
-            className="rounded-lg px-4 py-2.5 text-sm font-medium text-ink-secondary transition hover:bg-surface"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={!isValid || isBusy || (!isEdit && Boolean(createdProgram))}
-            className="rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isUpdating
-              ? "Saving changes…"
-              : isCreating
-                ? "Creating program…"
+              Cancel
+            </Link>
+            <button
+              type="button"
+              onClick={handleSaveDraftClick}
+              disabled={!isValid || isBusy}
+              className="rounded-lg border border-card-border px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isUpdating || isCreating
+                ? isEdit
+                  ? "Saving changes…"
+                  : "Saving draft…"
                 : isEdit
                   ? "Save changes"
-                  : "Create program"}
+                  : "Save draft"}
+            </button>
+            {showCreateProgramAction ? (
+              <button
+                type="button"
+                onClick={handleCreateProgramClick}
+                disabled={!isValid || isBusy}
+                className="rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isUpdating || isCreating
+                  ? isEdit
+                    ? "Activating…"
+                    : "Creating program…"
+                  : isEdit
+                    ? "Activate program"
+                    : "Create program"}
+              </button>
+            ) : null}
+          </div>
+        </footer>
+      </form>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title={isEdit ? "Activate this program?" : "Create active program?"}
+        description="An active program is shown to users on the referral experience. Only one program can be active at a time. Do you want to continue?"
+      >
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(false)}
+            disabled={isBusy}
+            className="rounded-lg px-4 py-2.5 text-sm font-medium text-ink-secondary transition hover:bg-surface disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmSaveDraft}
+            disabled={isBusy}
+            className="rounded-lg border border-card-border px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-surface disabled:opacity-60"
+          >
+            Save draft
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmActivate}
+            disabled={isBusy}
+            className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:bg-ink/90 disabled:opacity-60"
+          >
+            {isBusy
+              ? isEdit
+                ? "Activating…"
+                : "Creating…"
+              : isEdit
+                ? "Yes, activate"
+                : "Yes, create program"}
           </button>
         </div>
-      </footer>
-    </form>
-  );
-}
-
-function CreatedProgramBanner({
-  program,
-  isActivating,
-  onActivate,
-  onForceActivate,
-}: {
-  program: Program;
-  isActivating: boolean;
-  onActivate: () => void;
-  onForceActivate: () => void;
-}) {
-  return (
-    <div
-      className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"
-      role="status"
-    >
-      <p className="text-sm font-medium text-emerald-900">
-        Draft created: {program.name}
-      </p>
-      <p className="mt-1 text-sm text-emerald-800">
-        Only one program can be <strong>ACTIVE</strong> at a time. Activating
-        this draft will fail if another program is already active unless you use
-        force activation.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Link
-          href={`/dashboard/programs/${program.id}`}
-          className="rounded-md border border-emerald-300 bg-white px-4 py-2 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100/50"
-        >
-          View program
-        </Link>
-        <button
-          type="button"
-          onClick={onActivate}
-          disabled={isActivating}
-          className="rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-900 disabled:opacity-60"
-        >
-          {isActivating ? "Activating…" : "Activate program"}
-        </button>
-        <button
-          type="button"
-          onClick={onForceActivate}
-          disabled={isActivating}
-          className="rounded-md px-4 py-2 text-sm font-medium text-emerald-900 underline-offset-2 hover:underline disabled:opacity-60"
-        >
-          Activate with force
-        </button>
-      </div>
-    </div>
+      </ConfirmDialog>
+    </>
   );
 }

@@ -2,8 +2,11 @@
 
 import { useCallback, useState } from "react";
 import type { ApiErrorBody, Program } from "@/lib/programs/types";
-import { buildCreateProgramPayload } from "@/lib/programs/schema";
-import type { CreateProgramFormValues } from "@/lib/programs/schema";
+import {
+  buildCreateProgramPayload,
+  type CreateProgramFormValues,
+  type ProgramPayloadOptions,
+} from "@/lib/programs/schema";
 
 type CreateProgramResult =
   | { ok: true; program: Program }
@@ -13,14 +16,17 @@ export function useCreateProgram() {
   const [isLoading, setIsLoading] = useState(false);
 
   const createProgram = useCallback(
-    async (values: CreateProgramFormValues): Promise<CreateProgramResult> => {
+    async (
+      values: CreateProgramFormValues,
+      options?: ProgramPayloadOptions,
+    ): Promise<CreateProgramResult> => {
       setIsLoading(true);
 
       try {
         const response = await fetch("/api/admin/programs", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(buildCreateProgramPayload(values)),
+          body: JSON.stringify(buildCreateProgramPayload(values, options)),
         });
 
         const data = (await response.json().catch(() => ({}))) as {

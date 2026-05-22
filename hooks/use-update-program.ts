@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { buildUpdateProgramPayload } from "@/lib/programs/schema";
-import type { CreateProgramFormValues } from "@/lib/programs/schema";
+import {
+  buildUpdateProgramPayload,
+  type CreateProgramFormValues,
+  type ProgramPayloadOptions,
+} from "@/lib/programs/schema";
 import type { ApiErrorBody, Program } from "@/lib/programs/types";
 
 type UpdateProgramResult =
@@ -16,6 +19,7 @@ export function useUpdateProgram() {
     async (
       programId: string,
       values: CreateProgramFormValues,
+      options?: ProgramPayloadOptions,
     ): Promise<UpdateProgramResult> => {
       setIsLoading(true);
 
@@ -25,7 +29,7 @@ export function useUpdateProgram() {
           {
             method: "PATCH",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(buildUpdateProgramPayload(values)),
+            body: JSON.stringify(buildUpdateProgramPayload(values, options)),
           },
         );
 

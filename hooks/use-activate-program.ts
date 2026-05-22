@@ -11,16 +11,12 @@ export function useActivateProgram() {
   const [isLoading, setIsLoading] = useState(false);
 
   const activateProgram = useCallback(
-    async (
-      programId: string,
-      options?: { force?: boolean },
-    ): Promise<ActivateProgramResult> => {
+    async (programId: string): Promise<ActivateProgramResult> => {
       setIsLoading(true);
 
       try {
-        const query = options?.force ? "?force=true" : "";
         const response = await fetch(
-          `/api/admin/programs/${encodeURIComponent(programId)}/activate${query}`,
+          `/api/admin/programs/${encodeURIComponent(programId)}/activate`,
           { method: "POST" },
         );
 

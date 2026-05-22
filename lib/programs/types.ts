@@ -1,50 +1,71 @@
-export type AttributionRule =
-  | "FIRST_TOUCH"
-  | "FIRST_TOUCH_CODE_OVERRIDE"
-  | "LAST_TOUCH";
-
-export type RefereeBenefitType = "NONE" | "TRIAL_EXTENSION" | "CREDIT";
-
-export type CapBehavior = "ROLL_FORWARD" | "HARD_STOP";
+export type RefereeBenefitType = "CREDIT";
 
 export type ProgramStatus = "DRAFT" | "ACTIVE" | "ARCHIVED" | string;
+
+export type CommissionState =
+  | "PENDING"
+  | "EARNED"
+  | "PAID"
+  | "CLAWED_BACK"
+  | string;
+
+export type CommissionStateSummary = {
+  count: number;
+  amount: number;
+};
+
+export type ProgramSummary = {
+  totalReferrals: number;
+  totalCommissions: number;
+  termsAcceptancesCount?: number;
+  currency: string;
+  commissionsByState: Partial<
+    Record<CommissionState, CommissionStateSummary>
+  >;
+};
+
+/** Reward terms for a single program version. */
+export type ProgramVersion = {
+  version: number;
+  termsVersion?: string;
+  changeReason?: string;
+  referrerRewardPct: number;
+  referrerRewardDurationMonths: number;
+  refereeBenefitType: RefereeBenefitType;
+  refereeBenefitValue: number;
+  holdPeriodDays: number;
+  createdAt?: string;
+  summary?: ProgramSummary;
+};
 
 export type Program = {
   id: string;
   name: string;
   status: ProgramStatus;
-  termsVersion: string;
-  currency: string;
   referrerRewardPct: number;
   referrerRewardDurationMonths: number;
-  cookieDays: number;
-  attributionRule: AttributionRule;
   refereeBenefitType: RefereeBenefitType;
-  refereeBenefitValue: number | null;
-  refereeBenefitTrialDays: number | null;
+  refereeBenefitValue: number;
   holdPeriodDays: number;
-  monthlyCap: number | null;
-  lifetimeCap: number | null;
-  capBehavior: CapBehavior;
+  termsVersion?: string;
   createdAt?: string;
   updatedAt?: string;
+};
+
+/** Full program payload from GET /api/v1/admin/programs/:id?include=versionStats */
+export type ProgramDetail = Program & {
+  currentVersion?: number;
+  versions?: ProgramVersion[];
+  summary?: ProgramSummary;
 };
 
 export type CreateProgramInput = {
   name: string;
   referrerRewardPct: number;
   referrerRewardDurationMonths: number;
-  cookieDays: number;
-  attributionRule: AttributionRule;
-  refereeBenefitType?: RefereeBenefitType;
-  refereeBenefitValue: number | null;
-  refereeBenefitTrialDays?: number | null;
+  refereeBenefitType: RefereeBenefitType;
+  refereeBenefitValue: number;
   holdPeriodDays: number;
-  monthlyCap?: number | null;
-  lifetimeCap?: number | null;
-  capBehavior: CapBehavior;
-  currency?: string;
-  termsVersion: string;
 };
 
 export type ApiErrorBody = {
@@ -62,4 +83,8 @@ export type ProgramListMeta = {
 export type ProgramListResponse = {
   data?: Program[];
   meta?: ProgramListMeta;
+} & ApiErrorBody;
+
+export type ProgramDetailResponse = {
+  data?: Record<string, unknown>;
 } & ApiErrorBody;

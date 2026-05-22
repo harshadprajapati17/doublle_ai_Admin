@@ -8,7 +8,7 @@ export function PageHeader({
   description,
   action,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   action?: ReactNode;
@@ -16,8 +16,15 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-start justify-between gap-4">
       <div className="max-w-2xl">
-        <p className="text-sm font-medium text-accent">{eyebrow}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-[2rem] sm:leading-tight">
+        {eyebrow ? (
+          <p className="text-sm font-medium text-accent">{eyebrow}</p>
+        ) : null}
+        <h1
+          className={cn(
+            "text-3xl font-semibold tracking-tight text-ink sm:text-[2rem] sm:leading-tight",
+            eyebrow && "mt-2",
+          )}
+        >
           {title}
         </h1>
         <p className="mt-2 text-base leading-relaxed text-ink-secondary">
@@ -120,6 +127,43 @@ export function MetricStrip({
   );
 }
 
+export function DetailGrid({
+  items,
+  size = "default",
+}: {
+  items: { label: string; value: string }[];
+  size?: "default" | "compact";
+}) {
+  return (
+    <dl
+      className={cn(
+        "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+        size === "compact"
+          ? "gap-x-6 gap-y-4"
+          : "gap-x-8 gap-y-8",
+      )}
+    >
+      {items.map((item) => (
+        <div key={item.label} className="min-w-0">
+          <dt className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+            {item.label}
+          </dt>
+          <dd
+            className={cn(
+              "tabular-nums",
+              size === "compact"
+                ? "mt-1 text-sm font-medium text-ink-secondary"
+                : "mt-2 text-lg font-semibold tracking-tight text-ink",
+            )}
+          >
+            {item.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function PrimaryButton({
   children,
   className,
@@ -175,14 +219,17 @@ export function SecondaryButton({
 export function EmptyState({
   title,
   description,
+  action,
 }: {
   title: string;
   description: string;
+  action?: ReactNode;
 }) {
   return (
     <div className="rounded-lg border border-dashed border-card-border bg-surface/50 px-4 py-8 text-center">
       <p className="text-sm font-medium text-ink">{title}</p>
       <p className="mt-1 text-sm text-ink-secondary">{description}</p>
+      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>
   );
 }

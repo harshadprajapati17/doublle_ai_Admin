@@ -81,7 +81,9 @@ export function Drawer({
             <CloseIcon className="size-4" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+          {children}
+        </div>
       </aside>
     </div>
   );
