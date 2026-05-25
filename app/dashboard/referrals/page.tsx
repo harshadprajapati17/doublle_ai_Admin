@@ -1,11 +1,6 @@
-import {
-  CardBody,
-  CardHeader,
-  ErrorBanner,
-  PageHeader,
-  SurfaceCard,
-} from "@/components/ui/dashboard";
 import { ReferralsTable } from "@/components/referrals/referrals-table";
+import { FluidDashboardLayout } from "@/components/fluid-dashboard-layout";
+import { ErrorBanner } from "@/components/ui/dashboard";
 import {
   adminUpstreamFetch,
   parseUpstreamJson,
@@ -21,61 +16,28 @@ export default async function ReferralsPage() {
 
   const payload = await parseUpstreamJson<ReferralListResponse>(upstream);
   const referrals = upstream.ok ? (payload.data ?? []) : [];
-  const activeCount = referrals.filter((r) => r.status === "ACTIVE").length;
-  const paidCount = referrals.filter(
-    (r) =>
-      r.payment.hasPaid ||
-      r.payment.capturedPaymentCount > 0 ||
-      Number.parseFloat(r.payment.totalPaidAmount) > 0,
-  ).length;
   const listError =
     !upstream.ok
       ? (payload.error?.message ?? "Could not load referrals.")
       : null;
 
   return (
-    <>
-      <PageHeader
-        eyebrow="Referrals"
-        title="Manage referrals"
-        description="Search by code, review referrer and referee attribution, and filter rows that have recorded payouts."
-      />
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Total referrals" value={String(referrals.length)} />
-        <StatCard label="Active" value={String(activeCount)} />
-        <StatCard label="With payout" value={String(paidCount)} />
-      </div>
-
-      <SurfaceCard>
-        <CardHeader
-          title="Referral registry"
-          description="Use search and filters to find attributions quickly. Click a row to view code, link, and full details."
+    <FluidDashboardLayout
+      title="Manage referrals"
+      description="Search by code, review attribution and lifecycle stage, and filter paid conversions."
+      fillViewport
+      contentClassName="min-h-0 flex-1"
+    >
+      {listError ? (
+        <div className="px-6 py-6 sm:px-8 lg:px-10">
+          <ErrorBanner message={listError} />
+        </div>
+      ) : (
+        <ReferralsTable
+          referrals={referrals}
+          referralAppOrigin={getReferralAppOrigin()}
         />
-        <CardBody>
-          {listError ? (
-            <ErrorBanner message={listError} />
-          ) : (
-            <ReferralsTable
-              referrals={referrals}
-              referralAppOrigin={getReferralAppOrigin()}
-            />
-          )}
-        </CardBody>
-      </SurfaceCard>
-    </>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-card-border bg-card px-5 py-4 shadow-(--shadow-card)">
-      <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-ink">
-        {value}
-      </p>
-    </div>
+      )}
+    </FluidDashboardLayout>
   );
 }

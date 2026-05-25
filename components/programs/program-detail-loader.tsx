@@ -15,7 +15,7 @@ export function ProgramDetailLoader({ programId }: { programId: string }) {
 
   if (state.status === "error") {
     return (
-      <SurfaceCard>
+      <SurfaceCard variant="embedded">
         <CardBody>
           <ErrorBanner message={state.message} />
           <div className="mt-4 flex flex-wrap gap-3">

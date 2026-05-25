@@ -43,6 +43,29 @@ function termsFromSource(
   };
 }
 
+function parseCountRecord(raw: unknown): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {};
+
+  const result: Record<string, number> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    result[key] = toNumber(value);
+  }
+  return result;
+}
+
+function parseFraudReview(
+  raw: unknown,
+): ProgramSummary["fraudReview"] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+
+  const record = raw as Record<string, unknown>;
+  return {
+    flagged: toNumber(record.flagged),
+    rejected: toNumber(record.rejected),
+    terminated: toNumber(record.terminated),
+  };
+}
+
 function parseCommissionsByState(
   raw: unknown,
 ): ProgramSummary["commissionsByState"] {
@@ -66,6 +89,9 @@ function parseSummary(raw: unknown): ProgramSummary | undefined {
   const record = raw as Record<string, unknown>;
   const currency = toOptionalString(record.currency) ?? "USD";
 
+  const referralsByStatus = parseCountRecord(record.referralsByStatus);
+  const fraudReview = parseFraudReview(record.fraudReview);
+
   return {
     totalReferrals: toNumber(record.totalReferrals),
     totalCommissions: toNumber(record.totalCommissions),
@@ -74,6 +100,9 @@ function parseSummary(raw: unknown): ProgramSummary | undefined {
         ? toNumber(record.termsAcceptancesCount)
         : undefined,
     currency,
+    referralsByStatus:
+      Object.keys(referralsByStatus).length > 0 ? referralsByStatus : undefined,
+    fraudReview,
     commissionsByState: parseCommissionsByState(record.commissionsByState),
   };
 }

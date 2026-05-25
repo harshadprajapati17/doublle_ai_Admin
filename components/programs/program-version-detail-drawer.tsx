@@ -96,7 +96,10 @@ export function ProgramVersionDetailDrawer({
               summary={version.summary}
               title="Version summary"
               description="Referrals and commissions attributed to this version."
-              includeTermsAcceptances
+              viewOptions={{
+                includeTermsAcceptances: true,
+                termsVersionLabel: version.termsVersion,
+              }}
               embedded
             />
           ) : (

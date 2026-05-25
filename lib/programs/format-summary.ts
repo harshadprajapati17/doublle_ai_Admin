@@ -4,10 +4,10 @@ import type {
 } from "@/lib/programs/types";
 
 const COMMISSION_STATE_LABELS: Record<string, string> = {
-  PENDING: "Pending",
+  PENDING: "On hold",
   EARNED: "Earned",
   PAID: "Paid",
-  CLAWED_BACK: "Clawed back",
+  CLAWED_BACK: "Reversed",
 };
 
 export function formatMoney(amount: number, currency: string): string {
@@ -40,8 +40,8 @@ export function summaryToGridItems(
       value: formatCount(summary.totalReferrals),
     },
     {
-      label: "Total commissions",
-      value: formatMoney(summary.totalCommissions, summary.currency),
+      label: "Commission records",
+      value: formatCount(summary.totalCommissions),
     },
   ];
 

@@ -5,5 +5,9 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <div className="h-dvh overflow-hidden">
+      <DashboardShell>{children}</DashboardShell>
+    </div>
+  );
 }

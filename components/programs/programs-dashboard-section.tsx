@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ProgramDetailCard } from "@/components/programs/program-detail-card";
 import { ProgramDetailSkeleton } from "@/components/programs/program-detail-skeleton";
@@ -97,7 +98,7 @@ export function ProgramsDashboardSection() {
 
   if (state.status === "error") {
     return (
-      <SurfaceCard>
+      <SurfaceCard variant="embedded">
         <CardBody>
           <ErrorBanner message={state.message} />
           <button
@@ -114,18 +115,21 @@ export function ProgramsDashboardSection() {
 
   if (state.status === "empty") {
     return (
-      <SurfaceCard>
-        <CardBody>
-          <EmptyState
-            title="No programs yet"
-            description="Create your first referral program to start attributing signups."
-            action={
-              <PrimaryButton href="/dashboard/programs/new">
-                Create program
-              </PrimaryButton>
-            }
-          />
-        </CardBody>
+      <SurfaceCard variant="embedded">
+        <EmptyState
+          variant="fluid"
+          title="No programs yet"
+          description="Launch a referral program to reward referrers, credit new users, and attribute every signup."
+          action={
+            <PrimaryButton
+              href="/dashboard/programs/new"
+              className="bg-accent shadow-sm hover:bg-accent/90"
+            >
+              <Plus className="size-4" aria-hidden />
+              Create program
+            </PrimaryButton>
+          }
+        />
       </SurfaceCard>
     );
   }

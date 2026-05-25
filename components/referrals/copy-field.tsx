@@ -1,34 +1,7 @@
 "use client";
 
+import { Copy } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
-
-function CopyIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden
-      className={cn("size-4", className)}
-    >
-      <rect
-        x="6.5"
-        y="6.5"
-        width="9"
-        height="9"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M4.5 13.5V5.5a1 1 0 0 1 1-1h8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 export function CopyField({
   label,
@@ -67,7 +40,7 @@ export function CopyField({
           onClick={handleCopy}
           className="inline-flex shrink-0 items-center gap-1.5 border-l border-card-border bg-ink px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-ink/90"
         >
-          <CopyIcon />
+          <Copy className="size-4" aria-hidden />
           {copied ? "Copied" : "Copy"}
         </button>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useEffect, useId, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +79,7 @@ export function Drawer({
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-card-border text-ink-secondary transition hover:bg-surface hover:text-ink"
             aria-label="Close"
           >
-            <CloseIcon className="size-4" />
+            <X className="size-4" aria-hidden />
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
@@ -86,18 +87,5 @@ export function Drawer({
         </div>
       </aside>
     </div>
-  );
-}
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden className={className}>
-      <path
-        d="M5 5l10 10M15 5 5 15"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

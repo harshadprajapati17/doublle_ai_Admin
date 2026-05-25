@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ProgramVersionDetailDrawer } from "@/components/programs/program-version-detail-drawer";
-import { formatCount, formatMoney } from "@/lib/programs/format-summary";
+import { formatCount } from "@/lib/programs/format-summary";
 import type { ProgramVersion } from "@/lib/programs/types";
 
 function formatVersionDate(iso?: string): string {
@@ -32,7 +32,14 @@ export function ProgramVersionHistory({
 
   if (versions.length === 0) return null;
 
-  const hasStats = versions.some((v) => v.summary);
+  const priorVersions =
+    currentVersion != null
+      ? versions.filter((v) => v.version !== currentVersion)
+      : versions;
+
+  if (priorVersions.length === 0) return null;
+
+  const hasStats = priorVersions.some((v) => v.summary);
 
   const isMuted = tone === "muted";
 
@@ -55,84 +62,85 @@ export function ProgramVersionHistory({
               : "mt-1 text-sm text-ink-secondary"
           }
         >
-          Reward terms and performance for each published version.
+          Reward terms and performance for prior published versions.
         </p>
         <div
           className={`mt-4 overflow-x-auto rounded-xl border border-card-border ${isMuted ? "bg-card" : ""}`}
         >
-          <table className="w-full min-w-[960px] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-card-border bg-surface/50 text-xs font-medium uppercase tracking-wider text-ink-muted">
                 <th className="px-4 py-3 font-medium">Version</th>
-                <th className="px-4 py-3 font-medium">Terms</th>
-                <th className="px-4 py-3 font-medium">Change</th>
-                <th className="px-4 py-3 font-medium">Reward</th>
-                <th className="px-4 py-3 font-medium">Duration</th>
-                <th className="px-4 py-3 font-medium">Credit</th>
-                <th className="px-4 py-3 font-medium">Hold</th>
+                <th className="w-0 whitespace-nowrap px-4 py-3 font-medium">
+                  Reward
+                </th>
+                <th className="w-0 whitespace-nowrap px-4 py-3 font-medium">
+                  Duration
+                </th>
+                <th className="w-0 whitespace-nowrap px-4 py-3 font-medium">
+                  Credit
+                </th>
+                <th className="w-0 whitespace-nowrap px-4 py-3 font-medium">Hold</th>
                 {hasStats ? (
                   <>
-                    <th className="px-4 py-3 font-medium">Referrals</th>
-                    <th className="px-4 py-3 font-medium">Commissions</th>
+                    <th className="w-0 whitespace-nowrap px-4 py-3 font-medium">
+                      Referrals
+                    </th>
+                    <th
+                      className="w-0 whitespace-nowrap px-4 py-3 font-medium"
+                      title="Commission records"
+                    >
+                      Records
+                    </th>
                   </>
                 ) : null}
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium">
+                <th className="w-0 whitespace-nowrap px-4 py-3 font-medium">
+                  Created
+                </th>
+                <th className="w-0 whitespace-nowrap px-4 py-3 text-right font-medium">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-card-border">
-              {versions.map((v) => {
-                const isCurrent = v.version === currentVersion;
-                return (
-                  <tr
-                    key={v.version}
-                    className={isCurrent ? "bg-accent/5" : undefined}
-                  >
+              {priorVersions.map((v) => (
+                <tr key={v.version}>
                     <td className="px-4 py-3 font-medium text-ink">
                       v{v.version}
-                      {isCurrent ? (
-                        <span className="ml-2 text-xs font-normal text-accent">
-                          Current
-                        </span>
-                      ) : null}
                     </td>
-                    <td className="px-4 py-3 text-ink">{v.termsVersion ?? "—"}</td>
-                    <td className="px-4 py-3 capitalize text-ink-secondary">
-                      {v.changeReason ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 tabular-nums text-ink">
+                    <td className="w-0 whitespace-nowrap px-4 py-3 tabular-nums text-ink">
                       {v.referrerRewardPct}%
                     </td>
-                    <td className="px-4 py-3 text-ink">
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-ink">
                       {v.referrerRewardDurationMonths} mo
                     </td>
-                    <td className="px-4 py-3 tabular-nums text-ink">
+                    <td className="w-0 whitespace-nowrap px-4 py-3 tabular-nums text-ink">
                       {v.refereeBenefitValue}
                     </td>
-                    <td className="px-4 py-3 text-ink">{v.holdPeriodDays} days</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-ink">
+                      {v.holdPeriodDays} days
+                    </td>
                     {hasStats ? (
                       <>
-                        <td className="px-4 py-3 tabular-nums text-ink">
+                        <td className="w-0 whitespace-nowrap px-4 py-3 tabular-nums text-ink">
                           {v.summary
                             ? formatCount(v.summary.totalReferrals)
                             : "—"}
                         </td>
-                        <td className="px-4 py-3 tabular-nums text-ink">
+                        <td
+                          className="w-0 whitespace-nowrap px-4 py-3 tabular-nums text-ink"
+                          title="Commission records"
+                        >
                           {v.summary
-                            ? formatMoney(
-                                v.summary.totalCommissions,
-                                v.summary.currency,
-                              )
+                            ? formatCount(v.summary.totalCommissions)
                             : "—"}
                         </td>
                       </>
                     ) : null}
-                    <td className="px-4 py-3 text-ink-secondary">
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-ink-secondary">
                       {formatVersionDate(v.createdAt)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-right">
                       <button
                         type="button"
                         onClick={() => setSelectedVersion(v)}
@@ -141,9 +149,8 @@ export function ProgramVersionHistory({
                         View details
                       </button>
                     </td>
-                  </tr>
-                );
-              })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

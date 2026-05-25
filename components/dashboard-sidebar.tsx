@@ -61,7 +61,7 @@ export function DashboardSidebar() {
   const displayName = adminEmail?.split("@")[0] ?? "Admin";
 
   return (
-    <aside className="sticky top-0 z-20 flex h-screen w-sidebar shrink-0 flex-col bg-sidebar text-sidebar-text">
+    <aside className="z-20 flex h-full w-sidebar shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-text">
       <div className="flex flex-1 flex-col px-5 pb-5 pt-7">
         <Link href="/dashboard" className="block">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-sidebar-muted">

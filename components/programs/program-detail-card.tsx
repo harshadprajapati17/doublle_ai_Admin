@@ -7,8 +7,11 @@ import {
 import { ProgramDetailActions } from "@/components/programs/program-detail-actions";
 import { ProgramSummarySection } from "@/components/programs/program-summary-section";
 import { ProgramVersionHistory } from "@/components/programs/program-version-history";
-import { getProgramTerms } from "@/lib/programs/parse-program";
-import type { ProgramDetail, ProgramVersion } from "@/lib/programs/types";
+import { FLUID_PAGE_X } from "@/lib/dashboard/fluid-spacing";
+import { getActiveVersion, getProgramTerms } from "@/lib/programs/parse-program";
+import type { ProgramDetail, ProgramSummary, ProgramVersion } from "@/lib/programs/types";
+import type { ProgramSummaryViewOptions } from "@/lib/programs/summary-metrics";
+import { cn } from "@/lib/utils";
 
 function statusTone(status: string): "success" | "warning" | "neutral" {
   if (status === "ACTIVE") return "success";
@@ -66,6 +69,30 @@ function formatVersionLabel(program: ProgramDetail): string | null {
   return `Version v${program.currentVersion}`;
 }
 
+function programSummaryView(
+  program: ProgramDetail,
+): { summary: ProgramSummary; viewOptions?: ProgramSummaryViewOptions } | null {
+  if (!program.summary) return null;
+
+  const active = getActiveVersion(program);
+  const termsCount = active?.summary?.termsAcceptancesCount;
+  if (termsCount == null) {
+    return { summary: program.summary };
+  }
+
+  const termsVersionLabel =
+    active?.termsVersion ??
+    (program.currentVersion != null ? `v${program.currentVersion}` : undefined);
+
+  return {
+    summary: { ...program.summary, termsAcceptancesCount: termsCount },
+    viewOptions: {
+      includeTermsAcceptances: true,
+      termsVersionLabel,
+    },
+  };
+}
+
 export function ProgramDetailCard({
   program,
   onActivated,
@@ -76,10 +103,16 @@ export function ProgramDetailCard({
   const terms = getProgramTerms(program);
   const gridItems = termsToGridItems(terms);
   const versionLabel = formatVersionLabel(program);
+  const summaryView = programSummaryView(program);
 
   return (
-    <SurfaceCard className="overflow-hidden">
-      <div className="flex flex-col gap-4 border-b border-card-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+    <SurfaceCard variant="embedded">
+      <div
+        className={cn(
+          "flex flex-col gap-4 border-b border-accent/10 bg-accent-soft/40 py-5 sm:flex-row sm:items-center sm:justify-between",
+          FLUID_PAGE_X,
+        )}
+      >
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">
             {program.name}
@@ -100,8 +133,8 @@ export function ProgramDetailCard({
         </div>
       </div>
 
-      <section className="border-b border-card-border/60 px-6 py-4 sm:px-8">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+      <section className={cn("border-b border-card-border/60 py-5", FLUID_PAGE_X)}>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-accent">
           Program terms
         </h3>
         <p className="mt-0.5 text-xs text-ink-muted">
@@ -112,14 +145,20 @@ export function ProgramDetailCard({
         </div>
       </section>
 
-      {program.summary ? (
-        <section className="px-6 py-6 sm:px-8">
-          <ProgramSummarySection summary={program.summary} variant="featured" />
+      {summaryView ? (
+        <section
+          className={cn("border-b border-card-border/60 bg-surface/50 py-6", FLUID_PAGE_X)}
+        >
+          <ProgramSummarySection
+            summary={summaryView.summary}
+            viewOptions={summaryView.viewOptions}
+            variant="featured"
+          />
         </section>
       ) : null}
 
       {program.versions?.length ? (
-        <section className="bg-surface px-6 py-5 sm:px-8">
+        <section className={cn("bg-surface py-5", FLUID_PAGE_X)}>
           <ProgramVersionHistory
             versions={program.versions}
             currentVersion={program.currentVersion}
@@ -129,7 +168,12 @@ export function ProgramDetailCard({
       ) : null}
 
       {program.status !== "ACTIVE" ? (
-        <div className="border-t border-card-border bg-surface px-6 py-5 sm:px-8">
+        <div
+          className={cn(
+            "border-t border-card-border bg-accent-soft/30 py-5",
+            FLUID_PAGE_X,
+          )}
+        >
           <ProgramDetailActions
             programId={program.id}
             onActivated={onActivated}

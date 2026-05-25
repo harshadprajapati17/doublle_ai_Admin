@@ -1,4 +1,6 @@
 import { SurfaceCard } from "@/components/ui/dashboard";
+import { FLUID_PAGE_X } from "@/lib/dashboard/fluid-spacing";
+import { cn } from "@/lib/utils";
 
 function Shimmer({ className }: { className: string }) {
   return (
@@ -65,11 +67,16 @@ function VersionTableSkeleton() {
 export function ProgramDetailSkeleton() {
   return (
     <SurfaceCard
-      className="overflow-hidden"
+      variant="embedded"
       aria-busy="true"
       aria-label="Loading program details"
     >
-      <div className="flex flex-col gap-4 border-b border-card-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <div
+        className={cn(
+          "flex flex-col gap-4 border-b border-accent/10 bg-accent-soft/40 py-5 sm:flex-row sm:items-center sm:justify-between",
+          FLUID_PAGE_X,
+        )}
+      >
         <div className="min-w-0 flex-1">
           <Shimmer className="h-8 w-64 max-w-full sm:h-9" />
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -80,7 +87,7 @@ export function ProgramDetailSkeleton() {
         <Shimmer className="h-10 w-28 shrink-0 rounded-lg" />
       </div>
 
-      <section className="border-b border-card-border/60 px-6 py-4 sm:px-8">
+      <section className={cn("border-b border-card-border/60 py-4", FLUID_PAGE_X)}>
         <Shimmer className="h-3 w-24" />
         <Shimmer className="mt-1 h-3 w-56 max-w-full" />
         <div className="mt-4">
@@ -88,11 +95,11 @@ export function ProgramDetailSkeleton() {
         </div>
       </section>
 
-      <section className="px-6 py-6 sm:px-8">
+      <section className={cn("py-6", FLUID_PAGE_X)}>
         <FeaturedSummarySkeleton />
       </section>
 
-      <section className="bg-surface px-6 py-5 sm:px-8">
+      <section className={cn("bg-surface py-5", FLUID_PAGE_X)}>
         <Shimmer className="h-3 w-28" />
         <Shimmer className="mt-1 h-3 w-64 max-w-full" />
         <div className="mt-4">

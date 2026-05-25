@@ -14,11 +14,23 @@ export type CommissionStateSummary = {
   amount: number;
 };
 
+export type ReferralSummaryStatus = "ACTIVE" | "TERMINATED" | "FRAUD_REJECTED";
+
+export type ReferralsByStatus = Partial<Record<ReferralSummaryStatus, number>>;
+
+export type FraudReviewSummary = {
+  flagged: number;
+  rejected: number;
+  terminated: number;
+};
+
 export type ProgramSummary = {
   totalReferrals: number;
   totalCommissions: number;
   termsAcceptancesCount?: number;
   currency: string;
+  referralsByStatus?: ReferralsByStatus;
+  fraudReview?: FraudReviewSummary;
   commissionsByState: Partial<
     Record<CommissionState, CommissionStateSummary>
   >;

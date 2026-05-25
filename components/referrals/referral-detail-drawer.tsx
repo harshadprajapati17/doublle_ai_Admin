@@ -5,6 +5,11 @@ import { CopyField } from "@/components/referrals/copy-field";
 import { Drawer } from "@/components/ui/drawer";
 import { StatusPill } from "@/components/ui/dashboard";
 import { buildReferralLink } from "@/lib/referrals/build-referral-link";
+import { formatReferralUserDetail } from "@/lib/referrals/format-user";
+import {
+  referralLifecycleLabel,
+  referralLifecycleStage,
+} from "@/lib/referrals/lifecycle";
 import type { Referral } from "@/lib/referrals/types";
 import { cn } from "@/lib/utils";
 
@@ -63,14 +68,22 @@ export function ReferralDetailDrawer({
           {link ? <CopyField label="Referral link" value={link} /> : null}
 
           <DetailSection title="People">
-            <DetailRow label="Referrer" value={formatUser(referral.referrer)} />
-            <DetailRow label="Referee" value={formatUser(referral.referee)} />
+            <DetailRow
+              label="Referrer"
+              value={formatReferralUserDetail(referral.referrer)}
+            />
+            <DetailRow
+              label="Referee"
+              value={formatReferralUserDetail(referral.referee)}
+            />
           </DetailSection>
 
           <DetailSection title="Payment">
             <DetailRow
-              label="Status"
-              value={referral.payment.hasPaid ? "Paid" : "Not paid"}
+              label="Stage"
+              value={referralLifecycleLabel(
+                referralLifecycleStage(referral.payment),
+              )}
             />
             <DetailRow
               label="Total paid"
@@ -150,12 +163,6 @@ export function ReferralDetailDrawer({
       ) : null}
     </Drawer>
   );
-}
-
-function formatUser(user: Referral["referrer"]) {
-  const name = user.name ?? "—";
-  const email = user.email ?? user.userId;
-  return `${name} · ${email}`;
 }
 
 function DetailSection({

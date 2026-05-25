@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Percent, UserPlus } from "lucide-react";
+import { FLUID_PAGE_X } from "@/lib/dashboard/fluid-spacing";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({
@@ -7,27 +9,61 @@ export function PageHeader({
   title,
   description,
   action,
+  density = "comfortable",
+  tone = "default",
 }: {
   eyebrow?: string;
   title: string;
   description: string;
   action?: ReactNode;
+  density?: "comfortable" | "compact" | "fluid";
+  tone?: "default" | "accent";
 }) {
+  const isFluid = density === "fluid";
+  const isCompact = density === "compact" || isFluid;
+
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div className="max-w-2xl">
+    <header className="flex flex-wrap items-center justify-between gap-3">
+      <div className={cn(isCompact ? "min-w-0 flex-1" : "max-w-2xl")}>
         {eyebrow ? (
-          <p className="text-sm font-medium text-accent">{eyebrow}</p>
+          tone === "accent" ? (
+            <span className="inline-flex rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold tracking-wide text-accent ring-1 ring-accent/15">
+              {eyebrow}
+            </span>
+          ) : (
+            <p
+              className={cn(
+                "font-medium text-accent",
+                isCompact ? "text-xs" : "text-sm",
+              )}
+            >
+              {eyebrow}
+            </p>
+          )
         ) : null}
         <h1
           className={cn(
-            "text-3xl font-semibold tracking-tight text-ink sm:text-[2rem] sm:leading-tight",
-            eyebrow && "mt-2",
+            "font-semibold tracking-tight text-ink",
+            isFluid
+              ? "text-lg leading-tight sm:text-xl"
+              : isCompact
+                ? "text-xl sm:text-2xl sm:leading-tight"
+                : "text-3xl sm:text-[2rem] sm:leading-tight",
+            eyebrow && !isFluid && (isCompact ? "mt-1" : "mt-2"),
           )}
         >
           {title}
         </h1>
-        <p className="mt-2 text-base leading-relaxed text-ink-secondary">
+        <p
+          className={cn(
+            "text-ink-secondary",
+            isFluid
+              ? "mt-0.5 text-xs leading-snug"
+              : isCompact
+                ? "mt-1 text-sm leading-relaxed"
+                : "mt-2 text-base leading-relaxed",
+          )}
+        >
           {description}
         </p>
       </div>
@@ -43,12 +79,14 @@ export function SurfaceCard({
 }: {
   children: ReactNode;
   className?: string;
-  variant?: "default" | "muted" | "inset";
+  variant?: "default" | "muted" | "inset" | "embedded";
 }) {
   return (
     <section
       className={cn(
-        "rounded-2xl border shadow-(--shadow-card)",
+        variant === "embedded"
+          ? "overflow-hidden bg-card"
+          : "rounded-2xl border shadow-(--shadow-card)",
         variant === "default" && "border-card-border bg-card",
         variant === "muted" && "border-card-border bg-surface-raised/60",
         variant === "inset" && "border-card-border bg-surface",
@@ -216,20 +254,77 @@ export function SecondaryButton({
   );
 }
 
+export function ReferralProgramEmptyIllustration() {
+  return (
+    <div
+      className="relative flex size-[4.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 via-accent-soft to-card shadow-sm ring-1 ring-accent/15"
+      aria-hidden
+    >
+      <UserPlus className="size-9 text-accent" strokeWidth={1.5} />
+      <span className="absolute -right-1.5 -top-1.5 flex size-6 items-center justify-center rounded-full bg-card text-accent shadow-sm ring-2 ring-card">
+        <Percent className="size-3.5" strokeWidth={2.5} />
+      </span>
+    </div>
+  );
+}
+
 export function EmptyState({
   title,
   description,
   action,
+  illustration,
+  className,
+  variant = "fluid",
 }: {
   title: string;
   description: string;
   action?: ReactNode;
+  illustration?: ReactNode;
+  className?: string;
+  /** `fluid` fills the parent panel edge-to-edge; `inset` is a nested card. */
+  variant?: "fluid" | "inset";
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-card-border bg-surface/50 px-4 py-8 text-center">
-      <p className="text-sm font-medium text-ink">{title}</p>
-      <p className="mt-1 text-sm text-ink-secondary">{description}</p>
-      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+    <div
+      className={cn(
+        "relative w-full overflow-hidden bg-gradient-to-b from-accent-soft/70 via-card to-card text-center",
+        variant === "fluid" &&
+          "flex min-h-[min(28rem,50vh)] flex-col items-center justify-center py-16 sm:py-20",
+        variant === "inset" &&
+          "rounded-2xl border border-card-border px-6 py-12 shadow-(--shadow-card) sm:px-10 sm:py-14",
+        className,
+      )}
+    >
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-accent/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-24 -left-16 size-48 rounded-full bg-accent/5 blur-3xl"
+        aria-hidden
+      />
+
+      <div
+        className={cn(
+          "relative mx-auto flex w-full max-w-lg flex-col items-center",
+          variant === "fluid" && FLUID_PAGE_X,
+        )}
+      >
+        {illustration ?? <ReferralProgramEmptyIllustration />}
+
+        <h3 className="mt-6 text-base font-semibold tracking-tight text-ink sm:text-lg">
+          {title}
+        </h3>
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-secondary">
+          {description}
+        </p>
+
+        {action ? (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {action}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
